@@ -1,3 +1,6 @@
+# Changes Made
+- changed from headless chrome to UI firefox(CDSC keeps changing div name)
+
 # How to use the tool?
 
 ### 1. Install the required dependencies.

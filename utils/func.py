@@ -8,7 +8,7 @@ from selenium.webdriver.support.select import Select
 from tabulate import tabulate
 import termcolor
 import os
-        
+
 # disable logging for webdriver
 os.environ['WDM_LOG_LEVEL'] = '0'
 
@@ -16,7 +16,13 @@ os.environ['WDM_LOG_LEVEL'] = '0'
 from utils.dict_maker import IPODict
 
 # import Driver installer
-from webdriver_manager.chrome import ChromeDriverManager             # For Chrome
+#from selenium.webdriver.chrome.service import Service as ChromiumService
+#from webdriver_manager.chrome import ChromeDriverManager
+#from webdriver_manager.core.utils import ChromeType
+from selenium.webdriver.firefox.service import Service as FirefoxService
+from webdriver_manager.firefox import GeckoDriverManager
+
+
 # from webdriver_manager.microsoft import EdgeChromiumDriverManager  # For Edge
 # from webdriver_manager.firefox import GeckoDriverManager           # For Firefox
 class web_driver():
@@ -33,12 +39,13 @@ class web_driver():
     options.add_argument("--start-maximized")
 
     # drivermanager automatically installs latest driver and set path to that driver
-    chrome_driver_path = ChromeDriverManager().install()        # call drivermanager according to browser you use
+    chrome_driver_path = GeckoDriverManager().install()        # call drivermanager according to browser you use
 
     # function that calls and runs the webdriver
-    driver= webdriver.Chrome(chrome_driver_path, options=options)
+    #driver= webdriver.Chrome(chrome_driver_path, options=options)
+    #driver = webdriver.Chrome(service=ChromiumService(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install()))
+    driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()))
     wait = WebDriverWait(driver,30)
-
 
 def login(dp,username,password):
     web_driver.driver.get("https://meroshare.cdsc.com.np/#/login")
@@ -127,8 +134,25 @@ def apply_ipo(kitta,crn,txn_pin):
         web_driver.driver.find_element(By.XPATH,"//*[@id='selectBank']/option[" + str(selected_bank-1) + "]").click()
 
     else:
-        # If only one bank account is linked, choose the first one
-        web_driver.driver.find_element(By.XPATH,"//*[@id='selectBank']/option[2]").click()
+        wait = WebDriverWait(web_driver.driver, 10)
+        bank_elem = wait.until(EC.element_to_be_clickable((By.ID, "selectBank")))
+
+        # Logic: Wait for the bank options to actually exist
+        wait.until(lambda d: len(Select(d.find_element(By.ID, "selectBank")).options) > 1)
+        Select(bank_elem).select_by_index(1)
+
+        # --- Part 2: Select Account Number ---
+        # We wait for the element to be clickable, BUT ALSO for the data to load inside it
+        account_elem = wait.until(EC.element_to_be_clickable((By.ID, "accountNumber")))
+
+        # DYNAMIC WAIT: This is the missing piece.
+        # It pauses the script until the server populates the account list.
+        wait.until(lambda d: len(Select(d.find_element(By.ID, "accountNumber")).options) > 1)
+
+        # Now it is safe to select
+        account_select = Select(account_elem)
+        account_select.select_by_index(1)
+
 
     appliedKitta = web_driver.driver.find_element(By.NAME,"appliedKitta")
     appliedKitta.send_keys(kitta)
@@ -160,4 +184,3 @@ def apply_ipo(kitta,crn,txn_pin):
 
 def quit_browser():
     web_driver.driver.quit()
-
