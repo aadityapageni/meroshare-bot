@@ -1,6 +1,8 @@
 # Changes Made
 - changed from headless chrome to UI firefox(CDSC keeps changing div name)
 
+### also let the spawned firefox opens in full screen as selenium will search for the elements that might not appeear in responsive mode
+
 # How to use the tool?
 
 ### 1. Install the required dependencies.
