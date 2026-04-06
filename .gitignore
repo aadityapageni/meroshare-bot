@@ -135,5 +135,7 @@ dmypy.json
 .pyre/
 demats.txt
 
+*.wdm/
+*wdm
 .wdm/
 .wdm
